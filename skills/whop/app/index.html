@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Whop Product Launcher</title>
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #1a1a1f;
+    --surface2: #24242b;
+    --border: #2e2e38;
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #f1f1f3;
+    --muted: #7f7f8f;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent2); }
+  .tab-bar { display: flex; gap: 4px; }
+  .tab {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+  /* ── Layout ── */
+  main { max-width: 860px; margin: 0 auto; padding: 40px 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* ── Form elements ── */
+  label { display: block; font-size: 0.88rem; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  input[type="text"], input[type="number"], input[type="password"], input[type="url"], select, textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  .field { margin-bottom: 18px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ── File list ── */
+  #file-list { list-style: none; margin-bottom: 12px; }
+  #file-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+  }
+  #file-list li .rm { cursor: pointer; color: var(--muted); font-size: 1.1rem; line-height: 1; }
+  #file-list li .rm:hover { color: var(--red); }
+
+  /* ── Status banner ── */
+  #status-banner {
+    display: none;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  #status-banner.info { background: #1e3a5f; color: #93c5fd; border: 1px solid #2563eb; display: block; }
+  #status-banner.success { background: #14532d; color: #86efac; border: 1px solid #16a34a; display: block; }
+  #status-banner.error { background: #450a0a; color: #fca5a5; border: 1px solid #dc2626; display: block; }
+
+  /* ── Checkout result ── */
+  #checkout-result {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 18px;
+    margin-top: 16px;
+  }
+  #checkout-result .checkout-url {
+    font-family: monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+    color: var(--accent2);
+    margin: 8px 0 12px;
+  }
+
+  /* ── Thumbnail creator ── */
+  .thumb-workspace {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+  }
+  #thumb-canvas {
+    width: 100%;
+    max-width: 480px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    display: block;
+    cursor: crosshair;
+  }
+  .thumb-controls { display: flex; flex-direction: column; gap: 14px; }
+  .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type="color"] {
+    width: 100%;
+    height: 38px;
+    padding: 2px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+  }
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .preset {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .preset:hover, .preset.active { border-color: var(--accent2); }
+  .font-size-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+  select { height: 38px; }
+  .thumb-btn-row { display: flex; gap: 10px; }
+
+  /* ── Products list ── */
+  #products-list { list-style: none; }
+  #products-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+  }
+  .product-name { font-weight: 600; font-size: 0.95rem; }
+  .product-id { font-size: 0.75rem; color: var(--muted); font-family: monospace; margin-top: 2px; }
+  .badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .badge-visible { background: #14532d; color: #86efac; }
+  .badge-hidden { background: #422006; color: #fed7aa; }
+  .badge-archived { background: #1c1c1c; color: var(--muted); }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .thumb-workspace { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 12px; padding: 14px 16px; }
+    main { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Whop Launcher
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('deploy')">Deploy</button>
+    <button class="tab" onclick="switchTab('thumbnail')">Thumbnail</button>
+    <button class="tab" onclick="switchTab('products')">Products</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════════════════════ DEPLOY PANEL ══════════════════════════ -->
+  <div id="panel-deploy" class="panel active">
+
+    <div id="status-banner"></div>
+
+    <!-- API Key -->
+    <div class="card">
+      <div class="card-title">Whop API Key</div>
+      <div class="field">
+        <label>API Key (starts with whop_)</label>
+        <input type="password" id="api-key" placeholder="whop_xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="testConnection()">Test Connection</button>
+      <span id="conn-status" style="margin-left:12px;font-size:0.85rem;color:var(--muted)"></span>
+    </div>
+
+    <!-- Product details -->
+    <div class="card">
+      <div class="card-title">Product</div>
+      <div class="field">
+        <label>Product Name</label>
+        <input type="text" id="product-name" placeholder="e.g. Ultimate Template Bundle" />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Price (USD)</label>
+          <input type="number" id="price" placeholder="29.00" step="0.01" min="0" />
+        </div>
+        <div class="field">
+          <label>Plan Type</label>
+          <select id="plan-type">
+            <option value="one_time">One-time payment</option>
+            <option value="recurring">Monthly subscription</option>
+            <option value="free">Free</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Redirect URL after purchase (optional)</label>
+        <input type="url" id="redirect-url" placeholder="https://yoursite.com/thank-you" />
+      </div>
+    </div>
+
+    <!-- Files -->
+    <div class="card">
+      <div class="card-title">Files to Deliver</div>
+      <ul id="file-list"></ul>
+      <div class="row" style="margin-bottom:12px">
+        <div class="field" style="margin:0">
+          <label>Google Drive / Dropbox URL</label>
+          <input type="url" id="file-url" placeholder="https://drive.google.com/file/d/..." />
+        </div>
+        <div class="field" style="margin:0">
+          <label>File Name</label>
+          <input type="text" id="file-name" placeholder="ebook.pdf" />
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="addFile()">+ Add File</button>
+    </div>
+
+    <!-- Launch -->
+    <button class="btn btn-primary" id="launch-btn" onclick="launchProduct()" style="width:100%;justify-content:center;padding:14px">
+      Launch on Whop
+    </button>
+
+    <!-- Result -->
+    <div id="checkout-result">
+      <div style="font-weight:600;margin-bottom:4px">Product live!</div>
+      <div class="checkout-url" id="checkout-url-text"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary btn-sm" onclick="copyCheckout()">Copy Link</button>
+        <button class="btn btn-secondary btn-sm" onclick="openCheckout()">Open</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════ THUMBNAIL PANEL ══════════════════════════ -->
+  <div id="panel-thumbnail" class="panel">
+    <div class="card">
+      <div class="card-title">Thumbnail Creator — 1200 × 630</div>
+      <div class="thumb-workspace">
+        <canvas id="thumb-canvas" width="1200" height="630"></canvas>
+
+        <div class="thumb-controls">
+
+          <!-- Presets -->
+          <div>
+            <label style="margin-bottom:8px">Quick Presets</label>
+            <div class="preset-row" id="preset-row"></div>
+          </div>
+
+          <!-- Colors -->
+          <div>
+            <label style="margin-bottom:8px">Background</label>
+            <div class="color-row">
+              <div>
+                <label>Color 1</label>
+                <input type="color" id="bg1" value="#7c3aed" oninput="drawThumb()" />
+              </div>
+              <div>
+                <label>Color 2</label>
+                <input type="color" id="bg2" value="#4f46e5" oninput="drawThumb()" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div class="field">
+            <label>Title</label>
+            <input type="text" id="th-title" value="My Digital Product" oninput="drawThumb()" />
+          </div>
+          <div class="field">
+            <label>Subtitle</label>
+            <input type="text" id="th-sub" value="Templates · eBooks · Tools" oninput="drawThumb()" />
+          </div>
+          <div class="field">
+            <label>Badge (e.g. price)</label>
+            <input type="text" id="th-badge" value="$29" oninput="drawThumb()" />
+          </div>
+
+          <!-- Font -->
+          <div>
+            <label style="margin-bottom:8px">Title Size</label>
+            <input type="range" id="th-size" min="40" max="120" value="80" oninput="drawThumb()" style="width:100%;accent-color:var(--accent)" />
+          </div>
+
+          <!-- Text color -->
+          <div>
+            <label style="margin-bottom:8px">Text Color</label>
+            <input type="color" id="th-color" value="#ffffff" oninput="drawThumb()" style="width:100%;height:38px" />
+          </div>
+
+          <!-- Actions -->
+          <div class="thumb-btn-row">
+            <button class="btn btn-primary" onclick="downloadThumb()" style="flex:1;justify-content:center">Download PNG</button>
+            <button class="btn btn-secondary" onclick="copyThumbToClipboard()">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════ PRODUCTS PANEL ══════════════════════════ -->
+  <div id="panel-products" class="panel">
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Your Products</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadProducts()">Refresh</button>
+      </div>
+      <ul id="products-list">
+        <li style="color:var(--muted);font-size:0.88rem">Enter your API key on the Deploy tab, then click Refresh.</li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// State
+// ══════════════════════════════════════════════════════════════════════════
+const BASE = "https://api.whop.com";
+const files = [];
+let checkoutUrl = "";
+
+// ══════════════════════════════════════════════════════════════════════════
+// Tabs
+// ══════════════════════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("panel-" + name).classList.add("active");
+  event.currentTarget.classList.add("active");
+  if (name === "thumbnail") drawThumb();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// API helpers
+// ══════════════════════════════════════════════════════════════════════════
+function apiKey() { return document.getElementById("api-key").value.trim(); }
+
+async function whopGet(path, params = {}) {
+  const url = new URL(BASE + path);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const r = await fetch(url, { headers: { Authorization: "Bearer " + apiKey() } });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+async function whopPost(path, body) {
+  const r = await fetch(BASE + path, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + apiKey(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Status banner
+// ══════════════════════════════════════════════════════════════════════════
+function setStatus(msg, type = "info") {
+  const el = document.getElementById("status-banner");
+  el.textContent = msg;
+  el.className = type;
+}
+function clearStatus() {
+  const el = document.getElementById("status-banner");
+  el.className = "";
+  el.style.display = "none";
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Test connection
+// ══════════════════════════════════════════════════════════════════════════
+async function testConnection() {
+  const el = document.getElementById("conn-status");
+  el.textContent = "Testing…";
+  try {
+    const c = await whopGet("/v5/companies/me");
+    el.style.color = "var(--green)";
+    el.textContent = "✓ Connected: " + (c.title || c.id);
+  } catch (e) {
+    el.style.color = "var(--red)";
+    el.textContent = "✗ " + e.message;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// File management
+// ══════════════════════════════════════════════════════════════════════════
+function convertUrl(raw) {
+  // Google Drive share → direct download
+  const gdMatch = raw.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (gdMatch) return `https://drive.google.com/uc?export=download&id=${gdMatch[1]}`;
+  // Dropbox dl=0 → dl=1
+  return raw.replace("?dl=0", "?dl=1").replace("&dl=0", "&dl=1");
+}
+
+function addFile() {
+  const rawUrl = document.getElementById("file-url").value.trim();
+  const name = document.getElementById("file-name").value.trim();
+  if (!rawUrl || !name) return alert("Enter both URL and file name.");
+  const url = convertUrl(rawUrl);
+  files.push({ url, name });
+  renderFiles();
+  document.getElementById("file-url").value = "";
+  document.getElementById("file-name").value = "";
+}
+
+function renderFiles() {
+  const ul = document.getElementById("file-list");
+  ul.innerHTML = "";
+  files.forEach((f, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div>
+        <div style="font-weight:600">${esc(f.name)}</div>
+        <div style="font-size:0.73rem;color:var(--muted);margin-top:2px;word-break:break-all">${esc(f.url)}</div>
+      </div>
+      <span class="rm" onclick="removeFile(${i})">×</span>`;
+    ul.appendChild(li);
+  });
+}
+
+function removeFile(i) { files.splice(i, 1); renderFiles(); }
+function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ══════════════════════════════════════════════════════════════════════════
+// Launch product
+// ══════════════════════════════════════════════════════════════════════════
+async function launchProduct() {
+  clearStatus();
+  if (!apiKey()) return setStatus("Paste your Whop API key first.", "error");
+  const name = document.getElementById("product-name").value.trim();
+  if (!name) return setStatus("Enter a product name.", "error");
+
+  const btn = document.getElementById("launch-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Launching…';
+  document.getElementById("checkout-result").style.display = "none";
+
+  try {
+    setStatus("Creating product…", "info");
+    const product = await whopPost("/v5/products", { name, visibility: "visible" });
+    const productId = product.id;
+
+    const planType = document.getElementById("plan-type").value;
+    const priceRaw = parseFloat(document.getElementById("price").value) || 0;
+    const priceCents = Math.round(priceRaw * 100);
+
+    let planBody = { product_id: productId, currency: "usd" };
+    if (planType === "free") {
+      Object.assign(planBody, { plan_type: "free", initial_price: 0, billing_period: 0 });
+    } else if (planType === "recurring") {
+      Object.assign(planBody, { plan_type: "recurring", renewal_price: priceCents, billing_period: 30 });
+    } else {
+      Object.assign(planBody, { plan_type: "one_time", initial_price: priceCents, billing_period: 0 });
+    }
+
+    setStatus("Creating pricing plan…", "info");
+    const plan = await whopPost("/v5/plans", planBody);
+
+    for (const f of files) {
+      setStatus(`Attaching ${f.name}…`, "info");
+      await whopPost("/v5/files", { product_id: productId, url: f.url, name: f.name });
+    }
+
+    setStatus("Creating checkout link…", "info");
+    const clBody = { plan_id: plan.id };
+    const redirect = document.getElementById("redirect-url").value.trim();
+    if (redirect) clBody.redirect_url = redirect;
+    const cl = await whopPost("/v5/checkout-links", clBody);
+
+    checkoutUrl = cl.url;
+    setStatus("Product launched successfully!", "success");
+
+    document.getElementById("checkout-url-text").textContent = checkoutUrl;
+    document.getElementById("checkout-result").style.display = "block";
+
+  } catch (e) {
+    setStatus("Error: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Launch on Whop";
+  }
+}
+
+function copyCheckout() {
+  navigator.clipboard.writeText(checkoutUrl).then(() => alert("Copied!"));
+}
+function openCheckout() { window.open(checkoutUrl, "_blank"); }
+
+// ══════════════════════════════════════════════════════════════════════════
+// Products list
+// ══════════════════════════════════════════════════════════════════════════
+async function loadProducts() {
+  const ul = document.getElementById("products-list");
+  ul.innerHTML = "<li style='color:var(--muted)'>Loading…</li>";
+  try {
+    const data = await whopGet("/v5/products");
+    const products = data.data || [];
+    if (!products.length) {
+      ul.innerHTML = "<li style='color:var(--muted)'>No products found.</li>";
+      return;
+    }
+    ul.innerHTML = "";
+    products.forEach(p => {
+      const li = document.createElement("li");
+      const badgeClass = p.visibility === "visible" ? "badge-visible"
+                       : p.visibility === "archived" ? "badge-archived"
+                       : "badge-hidden";
+      li.innerHTML = `
+        <div>
+          <div class="product-name">${esc(p.name)}</div>
+          <div class="product-id">${p.id}</div>
+        </div>
+        <span class="badge ${badgeClass}">${p.visibility}</span>`;
+      ul.appendChild(li);
+    });
+  } catch (e) {
+    ul.innerHTML = `<li style='color:var(--red)'>Error: ${esc(e.message)}</li>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Thumbnail creator
+// ══════════════════════════════════════════════════════════════════════════
+const PRESETS = [
+  { bg1: "#7c3aed", bg2: "#4f46e5", label: "Purple" },
+  { bg1: "#059669", bg2: "#0d9488", label: "Green" },
+  { bg1: "#dc2626", bg2: "#ea580c", label: "Red" },
+  { bg1: "#0ea5e9", bg2: "#6366f1", label: "Sky" },
+  { bg1: "#f59e0b", bg2: "#ef4444", label: "Sunset" },
+  { bg1: "#1e293b", bg2: "#0f172a", label: "Dark" },
+  { bg1: "#ec4899", bg2: "#8b5cf6", label: "Pink" },
+  { bg1: "#10b981", bg2: "#3b82f6", label: "Mint" },
+];
+
+function buildPresets() {
+  const row = document.getElementById("preset-row");
+  PRESETS.forEach((p, i) => {
+    const div = document.createElement("div");
+    div.className = "preset" + (i === 0 ? " active" : "");
+    div.style.background = `linear-gradient(135deg, ${p.bg1}, ${p.bg2})`;
+    div.title = p.label;
+    div.onclick = () => {
+      document.getElementById("bg1").value = p.bg1;
+      document.getElementById("bg2").value = p.bg2;
+      document.querySelectorAll(".preset").forEach(x => x.classList.remove("active"));
+      div.classList.add("active");
+      drawThumb();
+    };
+    row.appendChild(div);
+  });
+}
+
+function drawThumb() {
+  const canvas = document.getElementById("thumb-canvas");
+  const ctx = canvas.getContext("2d");
+  const W = 1200, H = 630;
+
+  const bg1 = document.getElementById("bg1").value;
+  const bg2 = document.getElementById("bg2").value;
+  const title = document.getElementById("th-title").value || "My Product";
+  const sub = document.getElementById("th-sub").value;
+  const badge = document.getElementById("th-badge").value;
+  const fontSize = parseInt(document.getElementById("th-size").value);
+  const textColor = document.getElementById("th-color").value;
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, bg1);
+  grad.addColorStop(1, bg2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Decorative circles
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath(); ctx.arc(W * 0.82, H * 0.2, 220, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W * 0.1, H * 0.85, 160, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Subtle grid lines
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Title
+  ctx.fillStyle = textColor;
+  ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+
+  // Word-wrap title
+  const words = title.split(" ");
+  const maxWidth = W - 120;
+  const lines = [];
+  let line = "";
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+
+  const totalH = lines.length * (fontSize * 1.2);
+  const startY = H / 2 - totalH / 2 - (sub ? 20 : 0);
+  lines.forEach((l, i) => {
+    ctx.fillText(l, 60, startY + i * fontSize * 1.2);
+  });
+
+  // Subtitle
+  if (sub) {
+    ctx.font = `${Math.round(fontSize * 0.38)}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+    ctx.fillStyle = textColor;
+    ctx.globalAlpha = 0.75;
+    ctx.fillText(sub, 60, startY + totalH + 28);
+    ctx.globalAlpha = 1;
+  }
+
+  // Badge pill
+  if (badge) {
+    const badgeFontSize = Math.round(fontSize * 0.45);
+    ctx.font = `bold ${badgeFontSize}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+    const bw = ctx.measureText(badge).width + 40;
+    const bh = badgeFontSize + 24;
+    const bx = W - bw - 52;
+    const by = H - bh - 52;
+
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    roundRect(ctx, bx, by, bw, bh, bh / 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, bx, by, bw, bh, bh / 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(badge, bx + bw / 2, by + bh / 2);
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function downloadThumb() {
+  const canvas = document.getElementById("thumb-canvas");
+  const a = document.createElement("a");
+  a.download = "thumbnail.png";
+  a.href = canvas.toDataURL("image/png");
+  a.click();
+}
+
+async function copyThumbToClipboard() {
+  const canvas = document.getElementById("thumb-canvas");
+  canvas.toBlob(async blob => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      alert("Thumbnail copied to clipboard!");
+    } catch (e) {
+      alert("Copy failed — use Download instead.");
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════════════════════════════════════
+buildPresets();
+drawThumb();
+</script>
+</body>
+</html>
